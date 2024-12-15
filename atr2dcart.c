@@ -14,6 +14,7 @@ typedef unsigned char U8;
 #define SEC256_2 2
 #define OLDADDR 0
 #define NEWADDR 1
+#define TURBOSP 2
 /*--------------------------------------------------------------------*/
 #define CARMAX (512*1024)
 #define BANKSIZE (8*1024)
@@ -282,6 +283,38 @@ U8 saveCAR(const char *filename, U8 *cardata, unsigned int carsize)
 	return ret;
 }
 /*--------------------------------------------------------------------*/
+void addTurbo(U8 *data, unsigned int size, U8 mode)
+{
+	const U8 wvbl[]={0xA9, 0x77, 0xCD, 0x0B, 0xD4, 0xD0, 0xFB};
+	unsigned int i,j,k=0;
+	if (mode)
+	{
+		printf("Turbo Mode: ");
+		for (i=0; i<size; i++)
+		{
+			k=i;
+			for (j=0; j<(sizeof(wvbl)); j++)
+			{
+				if (data[i+j]!=wvbl[j])
+				{
+					j=(sizeof(wvbl));
+					k=0;
+				};
+			};
+			if (k) {i=size;};
+		};
+		if (k)
+		{
+			data[k+6]=0x00;
+			printf("activated\n");
+		}
+		else
+		{
+			printf("impossible\n");
+		};
+	};
+}
+/*--------------------------------------------------------------------*/
 void atr2dcart(const char *atrfn, const char *carfn, U8 mode)
 {
 	U8 atrdata[ATRMAX];
@@ -292,7 +325,8 @@ void atr2dcart(const char *atrfn, const char *carfn, U8 mode)
 	{
 		printf("Load \"%s\"\n",atrfn);
 		printf("ATR sectors: %i\n",(atrsize>>8));
-		checkXINT(atrdata,mode);
+		checkXINT(atrdata,(mode & NEWADDR));
+		addTurbo(starter_bin,starter_bin_len,(mode & TURBOSP));
 		buildCar(starter_bin,starter_bin_len,atrdata,atrsize,cardata,sizeof(cardata));
 		if (saveCAR(carfn,cardata,sizeof(cardata))) {printf("Save \"%s\"\n",carfn);}
 		else {printf("Save \"%s\" ERROR!\n",carfn);};
@@ -307,7 +341,11 @@ void modeSel(const char *str, U8 *mode)
 {
 	if ((str[0]=='-') && ((str[1]=='c') || (str[1]=='C')) && (str[2]==0))
 	{
-		*mode=NEWADDR;
+		*mode+=NEWADDR;
+	};
+	if ((str[0]=='-') && ((str[1]=='t') || (str[1]=='T')) && (str[2]==0))
+	{
+		*mode+=TURBOSP;
 	};
 }
 /*--------------------------------------------------------------------*/
@@ -324,11 +362,18 @@ int main( int argc, char* argv[] )
 		modeSel(argv[3],&mode);
 		atr2dcart(argv[1],argv[2],mode);
 	}
+	else if (argc==5)
+	{
+		modeSel(argv[3],&mode);
+		modeSel(argv[4],&mode);		
+		atr2dcart(argv[1],argv[2],mode);
+	}
 	else
 	{
 		printf("(c) GienekP\n");
-		printf("use:\natr2dcart file.atr file.car [-c]\n");
+		printf("use:\natr2dcart file.atr file.car [-c] [-t]\n");
 		printf("-c  remap JSR & JMP with JDSKINT / DSKINT\n");
+		printf("-t  turbo mode\n");
 	};
 	printf("\n");
 	return 0;
