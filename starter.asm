@@ -118,7 +118,8 @@ SPM		stx DSTATS
 		sty DBYT
 		sta DBYT+1
 ;--------------------------
-FSIO	lda DCMND
+FSIO	ldy #$00
+		lda DCMND
 		cmp #$52
 		beq SECREAD
 		cmp #$57
@@ -136,10 +137,8 @@ FSIO	lda DCMND
 		sta DVSTAT,x
 		dex
 		bpl @-			
-STATOK	ldy #$01
-		sty DSTATS
-UNKWCMD	pla
-		pla
+STATOK	iny
+UNKWCMD	sty DSTATS
 		jmp BACKADR
 ;--------------------------
 SECREAD	ldy #$01
