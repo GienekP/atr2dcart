@@ -127,11 +127,7 @@ FSIO	ldy #$00
 		cmp #$50
 		beq STATOK
 		cmp #$53
-		bne UNKWCMD		
-		lda #<DVSTAT
-		sta DBUFA
-		lda #>DVSTAT
-		sta DBUFA+1
+		bne UNKWCMD
 		ldx #$03
 @		lda D1STAT,x
 		sta DVSTAT,x
