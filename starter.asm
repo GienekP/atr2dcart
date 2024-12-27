@@ -128,11 +128,24 @@ FSIO	ldy #$00
 		beq STATOK
 		cmp #$53
 		bne UNKWCMD
-		ldx #$03
-@		lda D1STAT,x
-		sta DVSTAT,x
-		dex
-		bpl @-			
+		lda TMP
+		pha
+		lda TMP+1
+		pha
+		lda DBUFA
+		sta TMP
+		lda DBUFA+1
+		sta TMP+1
+		ldy #$03
+@		lda D1STAT,y
+		sta (TMP),y
+		dey
+		bpl @-
+		pla
+		sta TMP+1
+		pla
+		sta TMP
+		iny
 STATOK	iny
 UNKWCMD	sty DSTATS
 		jmp BACKADR
@@ -187,9 +200,10 @@ D1STAT  dta $18,$ff,$01,$00		; 18 - 128 sector / 38 - 256 sector
 .end
 ENDMAIN
 ;--------------------------
-; DIRECT RESTART CARTRIDGE 'RUN $D5FA'
+; DIRECT RESTART CARTRIDGE 'RUN $D5F8'
 
-		:19 dta $EA
+		:06 dta $EA
+		inc CRITIC
 		sta $D500
 		jmp RESETCD
 		
